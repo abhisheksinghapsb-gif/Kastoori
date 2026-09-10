@@ -133,60 +133,72 @@ function results = run_simulation_analysis(options)
     % ---------------------------------------------------------------------
     if options.doPlots
         fig = figure('Name', 'Telemedicine Queue & Capacity Analysis', ...
-            'Color', 'w', 'Position', [100, 100, 1100, 650]);
+            'Color', [0.96, 0.97, 0.99], 'Position', [100, 100, 1100, 650]);
 
         timeDays = timeHours / hoursPerDay;
 
         % Subplot 1: Queue Backlog Comparison Over 250 Working Days
-        subplot(2, 2, 1);
-        plot(timeDays, queueWithoutAI, 'r-', 'LineWidth', 2.2); hold on;
-        plot(timeDays, queueWithAI, 'b-', 'LineWidth', 2.0);
+        ax1 = subplot(2, 2, 1);
+        set(ax1, 'Color', 'w', 'XColor', [0.12, 0.15, 0.25], 'YColor', [0.12, 0.15, 0.25], ...
+            'GridColor', [0.80, 0.82, 0.88], 'GridAlpha', 0.6);
+        plot(timeDays, queueWithoutAI, 'r-', 'LineWidth', 2.4); hold on;
+        plot(timeDays, queueWithAI, 'b-', 'LineWidth', 2.2);
         grid on;
-        xlabel('Operating Timeline (Working Days)', 'FontSize', 9, 'FontWeight', 'bold');
-        ylabel('Patient Queue Length (Cases)', 'FontSize', 9, 'FontWeight', 'bold');
-        title('Doctor Review Queue: Backlog Accumulation', 'FontSize', 10, 'FontWeight', 'bold');
-        legend({'Without AI (Collapse: 40k+ Backlog)', 'With AI Triage (Stable: < 5 Cases)'}, ...
+        xlabel('Operating Timeline (Working Days)', 'FontSize', 9.5, 'FontWeight', 'bold', 'Color', [0.1, 0.15, 0.25]);
+        ylabel('Patient Queue Length (Cases)', 'FontSize', 9.5, 'FontWeight', 'bold', 'Color', [0.1, 0.15, 0.25]);
+        title('Doctor Review Queue: Backlog Accumulation', 'FontSize', 11, 'FontWeight', 'bold', 'Color', [0.06, 0.15, 0.35]);
+        leg1 = legend({'Without AI (Collapse: 40k+ Backlog)', 'With AI Triage (Stable: < 5 Cases)'}, ...
             'Location', 'northwest');
+        set(leg1, 'TextColor', [0.1, 0.15, 0.25], 'Color', [0.98, 0.98, 1.0], 'EdgeColor', [0.75, 0.78, 0.85]);
 
         % Subplot 2: Patient Wait Time (Months vs Minutes)
-        subplot(2, 2, 2);
+        ax2 = subplot(2, 2, 2);
+        set(ax2, 'Color', 'w', 'GridColor', [0.80, 0.82, 0.88], 'GridAlpha', 0.6);
         yyaxis left;
-        plot(timeDays, waitTimeWithoutAI_Days / 22.0, 'r-', 'LineWidth', 2.0);
-        ylabel('Wait Time Without AI (Months)', 'FontSize', 9, 'FontWeight', 'bold');
+        plot(timeDays, waitTimeWithoutAI_Days / 22.0, 'r-', 'LineWidth', 2.2);
+        ylabel('Wait Time Without AI (Months)', 'FontSize', 9.5, 'FontWeight', 'bold', 'Color', [0.85, 0.15, 0.15]);
         ylim([0, max(waitTimeWithoutAI_Days / 22.0) * 1.15]);
+        ax2.YAxis(1).Color = [0.85, 0.15, 0.15];
+        
         yyaxis right;
-        plot(timeDays, waitTimeWithAI_Mins, 'Color', [0.1, 0.6, 0.2], 'LineWidth', 2.0);
-        ylabel('Wait Time With AI (Minutes)', 'FontSize', 9, 'FontWeight', 'bold');
+        plot(timeDays, waitTimeWithAI_Mins, 'Color', [0.08, 0.55, 0.20], 'LineWidth', 2.2);
+        ylabel('Wait Time With AI (Minutes)', 'FontSize', 9.5, 'FontWeight', 'bold', 'Color', [0.08, 0.55, 0.20]);
+        ax2.YAxis(2).Color = [0.08, 0.55, 0.20];
         grid on;
-        xlabel('Operating Timeline (Working Days)', 'FontSize', 9, 'FontWeight', 'bold');
-        title('Patient Wait Times for Specialist Review', 'FontSize', 10, 'FontWeight', 'bold');
+        xlabel('Operating Timeline (Working Days)', 'FontSize', 9.5, 'FontWeight', 'bold', 'Color', [0.1, 0.15, 0.25]);
+        title('Patient Wait Times for Specialist Review', 'FontSize', 11, 'FontWeight', 'bold', 'Color', [0.06, 0.15, 0.35]);
 
         % Subplot 3: Traffic Intensity & System Utilization
-        subplot(2, 2, 3);
+        ax3 = subplot(2, 2, 3);
+        set(ax3, 'Color', 'w', 'XColor', [0.12, 0.15, 0.25], 'YColor', [0.12, 0.15, 0.25], ...
+            'GridColor', [0.80, 0.82, 0.88], 'GridAlpha', 0.6);
         categories = {'Without AI', 'With AI Triage'};
         trafficVals = [lambda_total / mu_doctor, lambda_with_ai / mu_doctor];
         b1 = bar(1:2, trafficVals, 0.5, 'FaceColor', 'flat');
         b1.CData(1,:) = [0.85, 0.2, 0.2];
-        b1.CData(2,:) = [0.2, 0.65, 0.3];
+        b1.CData(2,:) = [0.15, 0.65, 0.25];
         hold on;
-        yline(1.0, 'k--', 'Capacity Threshold (\rho = 1.0)', 'LineWidth', 1.5);
+        yline(1.0, '--', 'Capacity Threshold (\rho = 1.0)', 'LineWidth', 1.5, ...
+            'Color', [0.35, 0.35, 0.40], 'LabelVerticalAlignment', 'bottom');
         grid on;
-        set(gca, 'XTick', 1:2, 'XTickLabel', categories, 'FontSize', 9, 'FontWeight', 'bold');
-        ylabel('Traffic Intensity (\rho = \lambda / \mu)', 'FontSize', 9, 'FontWeight', 'bold');
-        title('Doctor Workload & Burnout Risk', 'FontSize', 10, 'FontWeight', 'bold');
+        set(ax3, 'XTick', 1:2, 'XTickLabel', categories, 'FontSize', 9.5, 'FontWeight', 'bold');
+        ylabel('Traffic Intensity (\rho = \lambda / \mu)', 'FontSize', 9.5, 'FontWeight', 'bold', 'Color', [0.1, 0.15, 0.25]);
+        title('Doctor Workload & Burnout Risk', 'FontSize', 11, 'FontWeight', 'bold', 'Color', [0.06, 0.15, 0.35]);
         ylim([0, 2.0]);
 
         % Subplot 4: Rural Bandwidth Utilization
-        subplot(2, 2, 4);
+        ax4 = subplot(2, 2, 4);
+        set(ax4, 'Color', 'w', 'XColor', [0.12, 0.15, 0.25], 'YColor', [0.12, 0.15, 0.25], ...
+            'GridColor', [0.80, 0.82, 0.88], 'GridAlpha', 0.6);
         bwVals = [totalDataWithoutAI_GB, totalDataWithAI_GB];
         b2 = bar(1:2, bwVals, 0.5, 'FaceColor', 'flat');
-        b2.CData(1,:) = [0.85, 0.35, 0.1];
-        b2.CData(2,:) = [0.15, 0.45, 0.8];
+        b2.CData(1,:) = [0.88, 0.40, 0.10];
+        b2.CData(2,:) = [0.15, 0.45, 0.80];
         grid on;
-        set(gca, 'XTick', 1:2, 'XTickLabel', categories, 'FontSize', 9, 'FontWeight', 'bold');
-        ylabel('Annual Uplink Data Transmitted (GB)', 'FontSize', 9, 'FontWeight', 'bold');
+        set(ax4, 'XTick', 1:2, 'XTickLabel', categories, 'FontSize', 9.5, 'FontWeight', 'bold');
+        ylabel('Annual Uplink Data Transmitted (GB)', 'FontSize', 9.5, 'FontWeight', 'bold', 'Color', [0.1, 0.15, 0.25]);
         title(sprintf('Rural Cellular Bandwidth: %.0f%% Saved', bandwidthSaved_Pct), ...
-            'FontSize', 10, 'FontWeight', 'bold');
+            'FontSize', 11, 'FontWeight', 'bold', 'Color', [0.06, 0.15, 0.35]);
 
         % Save simulation visualization figure
         simPlotPath = fullfile(fileparts(mfilename('fullpath')), 'telemed_simulation_results.png');

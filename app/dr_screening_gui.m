@@ -109,39 +109,55 @@ function fig = dr_screening_gui()
 
     % Status Log / Recapture Guidance Box
     uilabel(pnlControls, 'Text', 'ASHA Operator Guidance:', 'Position', [15, 335, 255, 20], ...
-        'FontWeight', 'bold');
-    txtGuidance = uitextarea(pnlControls, 'Position', [15, 175, 255, 155], ...
+        'FontWeight', 'bold', 'FontColor', [0.1, 0.15, 0.25]);
+    txtGuidance = uitextarea(pnlControls, 'Position', [15, 185, 255, 145], ...
         'Value', {'Select an image or sample and click "RUN AI SCREENING PIPELINE".', ...
                   '', 'System will evaluate image quality, segment lesions, grade DR severity, and generate Grad-CAM.'}, ...
-        'Editable', 'off', 'FontSize', 9.5, 'BackgroundColor', [0.97, 0.98, 1.0]);
+        'Editable', 'off', 'FontSize', 9.5, 'BackgroundColor', [0.97, 0.98, 1.0], ...
+        'FontColor', [0.1, 0.15, 0.25]);
 
-    % Secondary Action: Export Doctor Clinical PDF Report
+    % Action 1: Export Doctor Clinical PDF Report
     btnPdf = uibutton(pnlControls, 'push', 'Text', 'EXPORT DOCTOR PDF REPORT', ...
-        'Position', [15, 110, 255, 38], ...
+        'Position', [15, 142, 255, 36], ...
         'BackgroundColor', [0.08, 0.25, 0.55], 'FontColor', 'w', ...
-        'FontSize', 10.5, 'FontWeight', 'bold', 'Enable', 'off', ...
+        'FontSize', 10, 'FontWeight', 'bold', 'Enable', 'off', ...
         'ButtonPushedFcn', @(src, evt) on_export_pdf());
 
+    % Action 2: In-App Doctor Clinical Report Viewer
+    btnViewReport = uibutton(pnlControls, 'push', 'Text', '📄 VIEW CLINICAL REPORT (IN-APP)', ...
+        'Position', [15, 100, 255, 36], ...
+        'BackgroundColor', [0.06, 0.42, 0.50], 'FontColor', 'w', ...
+        'FontSize', 10, 'FontWeight', 'bold', 'Enable', 'off', ...
+        'ButtonPushedFcn', @(src, evt) on_view_report_popup());
+
     % Telemedicine Simulation Button
-    btnSim = uibutton(pnlControls, 'push', 'Text', 'Run Telemed Queue Simulation', ...
-        'Position', [15, 62, 255, 30], ...
-        'BackgroundColor', [0.95, 0.95, 0.96], 'FontSize', 9, ...
+    btnSim = uibutton(pnlControls, 'push', 'Text', '📊 Run Telemed Queue Simulation', ...
+        'Position', [15, 56, 255, 34], ...
+        'BackgroundColor', [0.94, 0.95, 0.97], 'FontColor', [0.1, 0.15, 0.25], ...
+        'FontSize', 9.5, 'FontWeight', 'bold', ...
         'ButtonPushedFcn', @(src, evt) on_run_telemed_sim());
 
     % Batch Queue Screening Button
     btnBatch = uibutton(pnlControls, 'push', 'Text', '⚡ BATCH QUEUE SCREENING (3+ SCANS)', ...
-        'Position', [15, 16, 255, 38], ...
+        'Position', [15, 12, 255, 36], ...
         'BackgroundColor', [0.40, 0.18, 0.65], 'FontColor', 'w', ...
         'FontSize', 10, 'FontWeight', 'bold', ...
         'ButtonPushedFcn', @(src, evt) on_run_batch_screening());
 
     % ---------------------------------------------------------------------
-    % Center 2x2 Visual Display Grid
+    % Center Visual Display Grid & Doctor Report Viewer
     % ---------------------------------------------------------------------
     pnlVisuals = uipanel(fig, 'Position', [315, 20, 645, 685], ...
         'Title', 'DIAGNOSTIC VISUALIZATION (MULTI-STAGE ANALYSIS)', ...
         'FontSize', 11, 'FontWeight', 'bold', ...
         'BackgroundColor', 'w', 'ForegroundColor', [0.1, 0.2, 0.4]);
+
+    % Toggle between 2x2 Diagnostic Grid and Full Report View
+    btnToggleReport = uibutton(pnlVisuals, 'push', 'Text', '📄 Show Doctor Report View', ...
+        'Position', [415, 656, 215, 24], ...
+        'BackgroundColor', [0.08, 0.40, 0.50], 'FontColor', 'w', ...
+        'FontSize', 9, 'FontWeight', 'bold', 'Enable', 'off', ...
+        'ButtonPushedFcn', @(src, evt) on_toggle_report_view());
 
     % 4 Diagnostic Axes
     ax1 = uiaxes(pnlVisuals, 'Position', [15, 345, 295, 305]);
@@ -159,6 +175,10 @@ function fig = dr_screening_gui()
     ax4 = uiaxes(pnlVisuals, 'Position', [335, 25, 295, 305]);
     title(ax4, '4. Explainable AI: Grad-CAM Heatmap', 'FontSize', 10, 'FontWeight', 'bold');
     ax4.XTick = []; ax4.YTick = []; box(ax4, 'on');
+
+    % Full-Size In-App Doctor Report Display Axis
+    axReport = uiaxes(pnlVisuals, 'Position', [15, 15, 615, 630], 'Visible', 'off');
+    axReport.XTick = []; axReport.YTick = []; box(axReport, 'on');
 
     % ---------------------------------------------------------------------
     % Right Panel: Clinical Triage, IQA & Biomarkers
@@ -214,18 +234,23 @@ function fig = dr_screening_gui()
 
     % 5. Quantitative Biomarkers Summary Table
     uilabel(pnlDiagnosis, 'Text', 'EXTRACTED RETINAL BIOMARKERS', 'Position', [15, 185, 280, 20], ...
-        'FontWeight', 'bold', 'FontSize', 9.5, 'FontColor', [0.3, 0.3, 0.3]);
+        'FontWeight', 'bold', 'FontSize', 9.5, 'FontColor', [0.08, 0.18, 0.38]);
 
-    lblBio1 = uilabel(pnlDiagnosis, 'Text', '- Vessel Density: -- %', 'Position', [20, 160, 275, 18], 'FontSize', 9);
-    lblBio2 = uilabel(pnlDiagnosis, 'Text', '- Hard Exudates: -- clusters', 'Position', [20, 140, 275, 18], 'FontSize', 9);
-    lblBio3 = uilabel(pnlDiagnosis, 'Text', '- Microaneurysms: -- detected', 'Position', [20, 120, 275, 18], 'FontSize', 9);
-    lblBio4 = uilabel(pnlDiagnosis, 'Text', '- Blot Hemorrhages: -- detected', 'Position', [20, 100, 275, 18], 'FontSize', 9);
-    lblBio5 = uilabel(pnlDiagnosis, 'Text', '- Optic Disc: --', 'Position', [20, 80, 275, 18], 'FontSize', 9);
+    lblBio1 = uilabel(pnlDiagnosis, 'Text', '- Vessel Density: -- %', 'Position', [20, 160, 275, 18], ...
+        'FontSize', 9, 'FontColor', [0.10, 0.15, 0.25], 'FontWeight', 'bold');
+    lblBio2 = uilabel(pnlDiagnosis, 'Text', '- Hard Exudates: -- clusters', 'Position', [20, 140, 275, 18], ...
+        'FontSize', 9, 'FontColor', [0.10, 0.15, 0.25], 'FontWeight', 'bold');
+    lblBio3 = uilabel(pnlDiagnosis, 'Text', '- Microaneurysms: -- detected', 'Position', [20, 120, 275, 18], ...
+        'FontSize', 9, 'FontColor', [0.10, 0.15, 0.25], 'FontWeight', 'bold');
+    lblBio4 = uilabel(pnlDiagnosis, 'Text', '- Blot Hemorrhages: -- detected', 'Position', [20, 100, 275, 18], ...
+        'FontSize', 9, 'FontColor', [0.10, 0.15, 0.25], 'FontWeight', 'bold');
+    lblBio5 = uilabel(pnlDiagnosis, 'Text', '- Optic Disc: --', 'Position', [20, 80, 275, 18], ...
+        'FontSize', 9, 'FontColor', [0.10, 0.15, 0.25], 'FontWeight', 'bold');
 
     % MathWorks & SIH Footer note
     uilabel(pnlDiagnosis, 'Text', 'MathWorks SIH 26038 Benchmark: Sens >90%, Spec >85%', ...
         'Position', [15, 15, 285, 30], 'FontSize', 8, 'FontAngle', 'italic', ...
-        'FontColor', [0.4, 0.4, 0.4], 'HorizontalAlignment', 'center');
+        'FontColor', [0.20, 0.25, 0.35], 'HorizontalAlignment', 'center');
 
     % ---------------------------------------------------------------------
     % Callback Implementations
@@ -288,6 +313,12 @@ function fig = dr_screening_gui()
             lblTriageBadge.BackgroundColor = [0.88, 0.90, 0.92];
             lblTriageBadge.FontColor = [0.2, 0.2, 0.2];
             btnPdf.Enable = 'off';
+            btnViewReport.Enable = 'off';
+            btnToggleReport.Enable = 'off';
+            axReport.Visible = 'off'; cla(axReport);
+            ax1.Visible = 'on'; ax2.Visible = 'on'; ax3.Visible = 'on'; ax4.Visible = 'on';
+            btnToggleReport.Text = '📄 Show Doctor Report View';
+            btnToggleReport.BackgroundColor = [0.08, 0.40, 0.50];
 
             txtGuidance.Value = {sprintf('Loaded image: %s', imgPath), ...
                                 '', 'Click "RUN AI SCREENING PIPELINE" to begin automated diagnosis.'};
@@ -440,8 +471,10 @@ function fig = dr_screening_gui()
             imshow(camOverlay, 'Parent', ax4);
             title(ax4, '4. Grad-CAM Explainable AI', 'FontSize', 10, 'FontWeight', 'bold');
 
-            % Enable PDF Export Button
+            % Enable PDF Export and In-App Report Buttons
             btnPdf.Enable = 'on';
+            btnViewReport.Enable = 'on';
+            btnToggleReport.Enable = 'on';
 
             txtGuidance.Value = {
                 '*** AI SCREENING COMPLETE ***', ...
@@ -450,7 +483,7 @@ function fig = dr_screening_gui()
                 sprintf('Confidence: %.1f%%', pred.confidence * 100), ...
                 sprintf('Referable DR: %s', mat2str(pred.isReferable)), ...
                 '', ...
-                'Click "EXPORT DOCTOR PDF REPORT" to generate 30s clinical sign-off sheet.'
+                'Click "Show Doctor Report View" or "VIEW CLINICAL REPORT" to inspect full report.'
             };
         catch ME
             txtGuidance.Value = {
@@ -462,15 +495,7 @@ function fig = dr_screening_gui()
         end
     end
 
-    function on_export_pdf()
-        if isempty(appData.prediction)
-            uialert(fig, 'Please run screening first before exporting report.', 'No Diagnosis Available');
-            return;
-        end
-
-        txtGuidance.Value = {'Generating single-page Doctor Clinical PDF report...'};
-        drawnow;
-
+    function patientData = get_patient_data_struct()
         patientData = struct();
         patientData.patientId      = txtPatientId.Value;
         patientData.age            = txtAge.Value;
@@ -487,10 +512,26 @@ function fig = dr_screening_gui()
         patientData.vesselDensity  = (sum(appData.vesselMask(:)) / numel(appData.vesselMask)) * 100;
         patientData.lesionStats    = appData.lesionStats;
         patientData.prediction     = appData.prediction;
+    end
 
+    function reportPath = generate_report_files(showAlert)
+        patientData = get_patient_data_struct();
         pdfOut = fullfile(baseDir, sprintf('Doctor_Report_%s.pdf', patientData.patientId));
         reportPath = generate_clinical_report(patientData, pdfOut);
+        if showAlert
+            uialert(fig, sprintf('Doctor Report successfully generated at:\n%s', reportPath), 'Report Generated');
+            try, winopen(reportPath); catch, end
+        end
+    end
 
+    function on_export_pdf()
+        if isempty(appData.prediction)
+            uialert(fig, 'Please run screening first before exporting report.', 'No Diagnosis Available');
+            return;
+        end
+        txtGuidance.Value = {'Generating single-page Doctor Clinical PDF report...'};
+        drawnow;
+        reportPath = generate_report_files(true);
         txtGuidance.Value = {
             '*** DOCTOR CLINICAL REPORT EXPORTED ***', ...
             '', ...
@@ -498,7 +539,110 @@ function fig = dr_screening_gui()
             '', ...
             'Single-page format optimized for <30s ophthalmologist review.'
         };
-        uialert(fig, sprintf('Doctor Report successfully generated at:\n%s', reportPath), 'Report Generated');
+    end
+
+    function on_toggle_report_view()
+        if isempty(appData.prediction), return; end
+        
+        pdfOut = fullfile(baseDir, sprintf('Doctor_Report_%s.pdf', txtPatientId.Value));
+        [pDir, pName, ~] = fileparts(pdfOut);
+        pngPreviewPath = fullfile(pDir, [pName, '_preview.png']);
+        
+        if strcmp(btnToggleReport.Text, '📄 Show Doctor Report View')
+            if ~exist(pngPreviewPath, 'file')
+                txtGuidance.Value = {'Rendering Doctor Report preview on main screen...'};
+                drawnow;
+                generate_report_files(false);
+            end
+            
+            if exist(pngPreviewPath, 'file')
+                reportImg = imread(pngPreviewPath);
+                imshow(reportImg, 'Parent', axReport);
+                % Hide 4 diagnostic axes, show report axis
+                ax1.Visible = 'off'; cla(ax1);
+                ax2.Visible = 'off'; cla(ax2);
+                ax3.Visible = 'off'; cla(ax3);
+                ax4.Visible = 'off'; cla(ax4);
+                axReport.Visible = 'on';
+                btnToggleReport.Text = '🔍 Show 4-Panel Diagnostic Grid';
+                btnToggleReport.BackgroundColor = [0.15, 0.40, 0.70];
+                txtGuidance.Value = {
+                    '*** IN-APP DOCTOR REPORT DISPLAYED ***', ...
+                    'Full single-page Clinical Decision Support Report rendered on main screen.', ...
+                    'Click "Show 4-Panel Diagnostic Grid" to switch back to retinal images.'
+                };
+            end
+        else
+            % Restore 4-panel diagnostic grid
+            axReport.Visible = 'off'; cla(axReport);
+            ax1.Visible = 'on'; ax2.Visible = 'on'; ax3.Visible = 'on'; ax4.Visible = 'on';
+            if ~isempty(appData.currentImage), imshow(appData.currentImage, 'Parent', ax1); title(ax1, '1. Raw Retinal Fundus Scan', 'FontSize', 10, 'FontWeight', 'bold'); end
+            if ~isempty(appData.enhancedGray), imshow(appData.enhancedGray, 'Parent', ax2); title(ax2, '2. Enhanced Green (Rayleigh CLAHE)', 'FontSize', 10, 'FontWeight', 'bold'); end
+            if ~isempty(appData.lesionStats), imshow(appData.lesionStats.lesionOverlay, 'Parent', ax3); title(ax3, '3. Vasculature & Lesion Detections', 'FontSize', 10, 'FontWeight', 'bold'); end
+            if ~isempty(appData.gradCamOverlay), imshow(appData.gradCamOverlay, 'Parent', ax4); title(ax4, '4. Explainable AI: Grad-CAM Heatmap', 'FontSize', 10, 'FontWeight', 'bold'); end
+            btnToggleReport.Text = '📄 Show Doctor Report View';
+            btnToggleReport.BackgroundColor = [0.08, 0.40, 0.50];
+            txtGuidance.Value = {'Restored 4-Panel Diagnostic Grid.'};
+        end
+    end
+
+    function on_view_report_popup()
+        if isempty(appData.prediction)
+            uialert(fig, 'Please run screening first before viewing report.', 'No Diagnosis Available');
+            return;
+        end
+        pdfOut = fullfile(baseDir, sprintf('Doctor_Report_%s.pdf', txtPatientId.Value));
+        [pDir, pName, ~] = fileparts(pdfOut);
+        pngPreviewPath = fullfile(pDir, [pName, '_preview.png']);
+        if ~exist(pngPreviewPath, 'file')
+            txtGuidance.Value = {'Generating report preview...'};
+            drawnow;
+            generate_report_files(false);
+        end
+        
+        if ~exist(pngPreviewPath, 'file')
+            uialert(fig, 'Could not generate report preview image.', 'Preview Error');
+            return;
+        end
+        
+        reportImg = imread(pngPreviewPath);
+        
+        popupFig = uifigure('Name', sprintf('CLINICAL DECISION SUPPORT REPORT — Patient: %s', txtPatientId.Value), ...
+            'Position', [120, 30, 880, 740], 'Color', [0.95, 0.96, 0.98]);
+        
+        % Top Control Bar
+        pnlTop = uipanel(popupFig, 'Position', [10, 680, 860, 48], ...
+            'BackgroundColor', [0.08, 0.18, 0.36], 'BorderType', 'none');
+        uilabel(pnlTop, 'Text', sprintf('DOCTOR CLINICAL REPORT — Patient: %s (%s, %s)', ...
+            txtPatientId.Value, txtAge.Value, ddGender.Value), ...
+            'Position', [15, 12, 500, 24], 'FontSize', 12, 'FontWeight', 'bold', 'FontColor', 'w');
+        
+        uibutton(pnlTop, 'push', 'Text', '💾 Open in External PDF Viewer', ...
+            'Position', [530, 8, 220, 32], ...
+            'BackgroundColor', [0.12, 0.50, 0.30], 'FontColor', 'w', ...
+            'FontSize', 9.5, 'FontWeight', 'bold', ...
+            'ButtonPushedFcn', @(~, ~) on_open_external_pdf(pdfOut));
+        
+        uibutton(pnlTop, 'push', 'Text', 'Close', ...
+            'Position', [765, 8, 80, 32], ...
+            'BackgroundColor', [0.85, 0.85, 0.88], 'FontSize', 9.5, ...
+            'ButtonPushedFcn', @(~, ~) delete(popupFig));
+        
+        % Report Image Display Axes
+        axFull = uiaxes(popupFig, 'Position', [15, 15, 850, 655]);
+        imshow(reportImg, 'Parent', axFull);
+        axFull.XTick = []; axFull.YTick = []; box(axFull, 'on');
+    end
+
+    function on_open_external_pdf(pdfPath)
+        if ~exist(pdfPath, 'file')
+            generate_report_files(false);
+        end
+        try
+            winopen(pdfPath);
+        catch ME
+            uialert(fig, sprintf('Could not open PDF viewer: %s', ME.message), 'Error');
+        end
     end
 
     function on_run_telemed_sim()
