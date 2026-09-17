@@ -38,6 +38,11 @@ function [vesselMask, vesselDensity, vesselSkeleton] = segment_vessels(enhancedG
         end
     end
 
+    % Extract green channel if 3D RGB image was passed
+    if size(imgDbl, 3) > 1
+        imgDbl = imgDbl(:, :, 2);
+    end
+
     % Standardize resolution to 512x512 for instantaneous computation
     if size(imgDbl, 1) > 512 || size(imgDbl, 2) > 512
         imgDbl = imresize(imgDbl, [512, 512]);

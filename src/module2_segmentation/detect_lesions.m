@@ -33,8 +33,8 @@ function lesions = detect_lesions(img, enhancedGray, vesselMask, options)
     end
     if ~isfield(options, 'odDiskRadius'),       options.odDiskRadius       = 75; end
     if ~isfield(options, 'maDiskRadius'),       options.maDiskRadius       = 6;  end
-    if ~isfield(options, 'exudateThreshold'),   options.exudateThreshold   = 0.72; end
-    if ~isfield(options, 'minExudateArea'),     options.minExudateArea     = 4;  end
+    if ~isfield(options, 'exudateThreshold'),   options.exudateThreshold   = 0.76; end
+    if ~isfield(options, 'minExudateArea'),     options.minExudateArea     = 12; end
     if ~isfield(options, 'maxExudateArea'),     options.maxExudateArea     = 450; end
 
     % Standardize input to double [0, 1]
@@ -66,7 +66,7 @@ function lesions = detect_lesions(img, enhancedGray, vesselMask, options)
     % Retinal Field of View mask
     fovMask = (G > 0.04) | (R > 0.04);
     fovMask = imfill(fovMask, 'holes');
-    fovMask = imerode(fovMask, strel('disk', 12)); % Margin from boundary
+    fovMask = imerode(fovMask, strel('disk', 18)); % Generous margin from outer camera boundary ring
 
     % ---------------------------------------------------------------------
     % Step 1: Optic Disc (OD) Localization & Masking
@@ -117,8 +117,8 @@ function lesions = detect_lesions(img, enhancedGray, vesselMask, options)
     gSmooth = conv2(G, fspecial_gaussian([25, 25], 5.0), 'same');
     relBotHat = bottomHat ./ max(0.04, gSmooth);
 
-    % Gentle vessel buffer (1 pixel) to avoid capturing vessel margins
-    seVesselBuf = strel('disk', 1);
+    % Vessel buffer to avoid capturing vessel margins
+    seVesselBuf = strel('disk', 2);
     dilatedVessels = imdilate(vesselMask, seVesselBuf);
 
     % Candidates are dark focal points not belonging to the main vessel tree
@@ -136,7 +136,7 @@ function lesions = detect_lesions(img, enhancedGray, vesselMask, options)
     for k = 1:length(maProps)
         area = maProps(k).Area;
         ecc = maProps(k).Eccentricity;
-        % Microaneurysms: Small circular spots (2 <= area <= 40, eccentricity < 0.88)
+        % Microaneurysms: Small circular spots (2 <= area <= 45, eccentricity < 0.88)
         if area >= 2 && area <= 45 && ecc < 0.88
             microaneurysmMask(maProps(k).PixelIdxList) = true;
             maCount = maCount + 1;
@@ -148,33 +148,11 @@ function lesions = detect_lesions(img, enhancedGray, vesselMask, options)
     end
 
     % ---------------------------------------------------------------------
-    % Step 4: Clinical Diagnostic Overlay
+    % Step 4: Clinical Diagnostic Overlay (Original High-Visibility Multi-Biomarker)
     % ---------------------------------------------------------------------
-    % Base image: enhanced fundus
     overlay = imgDbl;
-    
-    % Overlay Vessels in Cyan [0, 0.85, 0.9]
-    vDil = imdilate(vesselMask, strel('disk', 1));
-    for c = 1:3
-        ch = overlay(:,:,c);
-        if c == 1, ch(vDil) = 0.0; end
-        if c == 2, ch(vDil) = 0.85; end
-        if c == 3, ch(vDil) = 0.95; end
-        overlay(:,:,c) = ch;
-    end
 
-    % Overlay Hard Exudates in High-Visibility Bright Yellow [1, 0.9, 0] with boundary outline
-    exDil = imdilate(exudateMask, strel('disk', 2));
-    exBound = exDil & ~exudateMask;
-    for c = 1:3
-        ch = overlay(:,:,c);
-        if c == 1, ch(exDil) = 1.0; end
-        if c == 2, ch(exDil) = 0.92; end
-        if c == 3, ch(exDil) = 0.05; end
-        overlay(:,:,c) = ch;
-    end
-
-    % Overlay Microaneurysms / Hemorrhages in Intense Magenta/Red [1, 0.1, 0.4]
+    % 1. Overlay Microaneurysms / Hemorrhages in Intense Magenta/Red [1, 0.1, 0.35]
     darkLesions = microaneurysmMask | hemorrhageMask;
     maDil = imdilate(darkLesions, strel('disk', 2));
     for c = 1:3
@@ -185,7 +163,27 @@ function lesions = detect_lesions(img, enhancedGray, vesselMask, options)
         overlay(:,:,c) = ch;
     end
 
-    % Draw Optic Disc contour in Green [0.1, 0.95, 0.2]
+    % 2. Overlay Hard Exudates in High-Visibility Bright Yellow [1, 0.92, 0.05]
+    exDil = imdilate(exudateMask, strel('disk', 2));
+    for c = 1:3
+        ch = overlay(:,:,c);
+        if c == 1, ch(exDil) = 1.0; end
+        if c == 2, ch(exDil) = 0.92; end
+        if c == 3, ch(exDil) = 0.05; end
+        overlay(:,:,c) = ch;
+    end
+
+    % 3. Overlay Retinal Blood Vessels in Electric Cyan [0, 0.85, 0.95]
+    vDil = imdilate(vesselMask, strel('disk', 1));
+    for c = 1:3
+        ch = overlay(:,:,c);
+        if c == 1, ch(vDil) = 0.0; end
+        if c == 2, ch(vDil) = 0.85; end
+        if c == 3, ch(vDil) = 0.95; end
+        overlay(:,:,c) = ch;
+    end
+
+    % 4. Draw Optic Disc contour in Bright Green [0.1, 0.95, 0.2]
     odPerim = bwperim(odMask);
     odPerimDil = imdilate(odPerim, strel('disk', 2));
     for c = 1:3
@@ -207,6 +205,10 @@ function lesions = detect_lesions(img, enhancedGray, vesselMask, options)
     lesions.exudateArea        = exudateArea;
     lesions.microaneurysmCount = maCount;
     lesions.hemorrhageCount    = hemoCount;
+    % Compatibility aliases for all callers
+    lesions.numMA              = maCount;
+    lesions.numHemo            = hemoCount;
+    lesions.numExudates        = exudateCount;
 end
 
 function h = fspecial_gaussian(p2, p3)

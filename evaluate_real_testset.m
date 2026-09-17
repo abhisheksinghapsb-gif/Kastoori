@@ -1,9 +1,8 @@
 % EVALUATE_REAL_TESTSET Evaluates 103 unseen IDRiD test cases
 clear; clc;
-addpath(genpath('g:\sih\src'));
-addpath('g:\sih\data');
+addpath(genpath(pwd));
 
-testDir = 'g:\sih\data\testing_dataset';
+testDir = fullfile(pwd, 'data', 'testing_dataset');
 imds = imageDatastore(testDir, 'IncludeSubfolders', true, 'LabelSource', 'foldernames');
 numImages = length(imds.Files);
 

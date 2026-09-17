@@ -37,6 +37,11 @@ function result = evaluate_image_quality(img, options)
     if ~isfield(options, 'minDynamicRange'),  options.minDynamicRange  = 0.08; end
     if ~isfield(options, 'maxGlareFraction'), options.maxGlareFraction = 0.035; end
 
+    % Support string or char file path input
+    if ischar(img) || isstring(img)
+        img = imread(char(img));
+    end
+
     % Convert input to double [0, 1]
     if isa(img, 'uint8')
         imgDbl = double(img) / 255.0;
@@ -78,10 +83,9 @@ function result = evaluate_image_quality(img, options)
     glarePixels = sum(fovPixels > 0.92);
     glareFraction = glarePixels / numFovPixels;
 
-    % 4. Calculate Sharpness & Noise (BRISQUE + Gradient Energy)
-    % Call MATLAB Image Processing Toolbox brisque if available
+    % 4. Calculate Sharpness & Spatial Focus (Fast Gradient Energy + Laplacian)
     brisqueScore = NaN;
-    if exist('brisque', 'file') == 2
+    if isfield(options, 'useBrisque') && options.useBrisque && exist('brisque', 'file') == 2
         try
             brisqueScore = brisque(imgGray);
         catch
@@ -89,27 +93,72 @@ function result = evaluate_image_quality(img, options)
         end
     end
 
-    % Tenengrad / Sobel gradient energy for independent sharpness validation
+    % Tenengrad / Sobel gradient energy for instantaneous sharpness validation
     [gx, gy] = gradient(imgGray);
     gradMag = sqrt(gx.^2 + gy.^2);
     sharpnessEnergy = mean(gradMag(fovMask)) * 100.0;
 
-    % If BRISQUE is unavailable, map gradient energy to standard BRISQUE scale
+    % Calibrate BRISQUE equivalent score
     if isnan(brisqueScore)
-        % High gradient energy (> 1.2) corresponds to sharp fundus (low BRISQUE ~ 25-35)
-        % Low gradient energy (< 0.6) corresponds to blurred fundus (high BRISQUE ~ 55-80)
-        brisqueScore = max(10, min(95, 80 - 38 * sharpnessEnergy));
+        % Clean fundus (sharpnessEnergy >= 0.55) gives low BRISQUE (~18-35)
+        % Severely blurred fundus (sharpnessEnergy < 0.35) gives high BRISQUE (>60)
+        brisqueScore = max(15, min(90, 62.0 - 32.0 * (sharpnessEnergy - 0.40)));
     end
 
-    % 5. Decision Rules
+    % Standardized 0-100 component scores calibrated for clinical fundus
+    sharpnessScore = max(10, min(100, round(35 + 60 * min(1.0, sharpnessEnergy / 0.70))));
+    illumScore     = max(10, min(100, round(35 + 65 * min(1.0, meanIllum / 0.25))));
+    glarePenalty   = min(50, round((glareFraction / max(0.01, options.maxGlareFraction)) * 25));
+    qualityScore   = max(5, min(99, round(0.52 * sharpnessScore + 0.48 * illumScore - glarePenalty)));
+
+    % 5. Multi-Tier Decision Rules & Fundus Compatibility Check
     isIlluminated = (meanIllum >= options.minIllumination) && (dynamicRange >= options.minDynamicRange);
     noGlare       = (glareFraction <= options.maxGlareFraction);
-    isSharp       = (brisqueScore <= options.brisqueThreshold) && (sharpnessEnergy >= 0.35);
+    isSharp       = (sharpnessEnergy >= 0.45);
 
-    passQuality = isIlluminated && noGlare && isSharp;
+    % Clinical Compatibility Verification
+    % Check whether the input image conforms to authentic retinal fundus optical properties
+    isCompatible = true;
+    incompatibleReason = '';
+
+    if size(imgDbl, 3) == 3
+        meanR = mean(mean(imgDbl(:,:,1)));
+        meanG = mean(mean(imgDbl(:,:,2)));
+        meanB = mean(mean(imgDbl(:,:,3)));
+        % Fundus photography has dominant red/orange reflectance or green (red-free).
+        % Non-fundus pictures (e.g. gray noise, landscape, text documents) have meanR <= meanB or meanR <= meanG
+        if (meanR < 1.05 * meanB && meanR < 1.05 * meanG) && meanIllum > 0.10
+            isCompatible = false;
+            incompatibleReason = 'Spectral signature inconsistent with retinal fundus (non-fundus scan detected).';
+        end
+    end
+
+    % Check for minimum FOV aperture and usable foreground
+    if numFovPixels < 0.05 * numel(imgGray)
+        isCompatible = false;
+        incompatibleReason = 'Aperture obstruction: Retinal field of view missing or severely occluded.';
+    end
+
+    % Severe uncorrectable blur
+    if sharpnessEnergy < 0.35
+        isCompatible = false;
+        incompatibleReason = 'Severe motion blur / optical defocus: Retinal vessels completely indistinguishable.';
+    end
+
+    % Massive flash glare (> 8% of FOV)
+    if glareFraction > 0.08
+        isCompatible = false;
+        incompatibleReason = 'Massive cornea flash reflection (>8% FOV): Macula or vascular tree obscured.';
+    end
+
+    passQuality = isIlluminated && noGlare && isSharp && isCompatible;
 
     % 6. Synthesize Actionable Health Worker Recapture Feedback
     feedbackList = {};
+    if ~isCompatible && ~isempty(incompatibleReason)
+        feedbackList{end+1} = incompatibleReason;
+    end
+
     if ~isIlluminated
         if meanIllum < options.minIllumination
             feedbackList{end+1} = 'Insufficient illumination: Increase fundus camera flash or check pupil dilation.';
@@ -123,20 +172,35 @@ function result = evaluate_image_quality(img, options)
     end
 
     if ~isSharp
-        feedbackList{end+1} = sprintf('Poor focus or motion blur detected (BRISQUE: %.1f): Stabilize chin rest, clean lens, and refocus.', brisqueScore);
+        feedbackList{end+1} = sprintf('Poor focus or motion blur detected (Energy: %.2f): Stabilize chin rest, clean lens, and refocus.', sharpnessEnergy);
     end
 
-    if passQuality
+    if passQuality && qualityScore >= 75
         status = 'PASS';
-        feedback = 'Image quality ADEQUATE for clinical diagnostic grading.';
+        feedback = sprintf('Image quality OPTIMAL (Score: %d/100) — Ready for clinical diagnostic grading.', qualityScore);
+    elseif passQuality || (qualityScore >= 55 && isCompatible)
+        status = 'WARNING';
+        if isempty(feedbackList)
+            feedback = sprintf('Image quality ACCEPTABLE WITH WARNING (Score: %d/100) — Suboptimal sharpness/illumination.', qualityScore);
+        else
+            feedback = sprintf('ACCEPTABLE WITH WARNING (Score: %d/100): %s', qualityScore, strjoin(feedbackList, ' | '));
+        end
     else
         status = 'REJECT';
-        feedback = strjoin(feedbackList, ' | ');
+        if isempty(feedbackList)
+            feedback = sprintf('REJECT (Score: %d/100): Image quality does not meet clinical diagnostic thresholds.', qualityScore);
+        else
+            feedback = sprintf('REJECT (Score: %d/100): %s', qualityScore, strjoin(feedbackList, ' | '));
+        end
     end
 
     % Package Output Struct
     result.status           = status;
-    result.passQuality      = passQuality;
+    result.isCompatible     = isCompatible;
+    result.passQuality      = (strcmp(status, 'PASS') || strcmp(status, 'WARNING')) && isCompatible;
+    result.qualityScore     = qualityScore;
+    result.sharpnessScore   = sharpnessScore;
+    result.illuminationScore= illumScore;
     result.brisqueScore     = brisqueScore;
     result.meanIllumination = meanIllum;
     result.glareFraction    = glareFraction;

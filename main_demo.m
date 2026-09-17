@@ -111,8 +111,9 @@ fprintf('  > Grad-CAM Activation Map generated (Focusing on class %d: %s)\n', ..
 % Package patient record and export clinical PDF
 patientRecord = struct();
 patientRecord.patientId      = 'IND-KA-PHC-8921';
+patientRecord.patientName    = 'Ramesh Kumar';
 patientRecord.age            = 58;
-patientRecord.gender         = 'Female';
+patientRecord.gender         = 'Male';
 patientRecord.phcCenter      = 'PHC Mulbagal, Kolar District';
 patientRecord.operatorId     = 'ASHA Worker #108';
 patientRecord.screeningDate  = datestr(now, 'dd-mmm-yyyy HH:MM');
@@ -126,8 +127,29 @@ patientRecord.vesselDensity  = vesselDensity;
 patientRecord.lesionStats    = lesionStats;
 patientRecord.prediction     = pred;
 
+% 1. Doctor Clinical Decision PDF Report with Tiered Hospital Referral
 reportPdfPath = fullfile(rootDir, 'Doctor_Screening_Report.pdf');
 generate_clinical_report(patientRecord, reportPdfPath);
+
+% 2. Automated Nearest Hospital Referral Tiering
+hosp = get_hospital_recommendations(pred.grade, patientRecord.phcCenter);
+fprintf('  > Tiered Hospital Recommendation:\n');
+fprintf('      Facility : %s (%s)\n', hosp.facilityName, hosp.tierLevel);
+fprintf('      Address  : %s\n', hosp.address);
+fprintf('      Distance : ~%.1f km  |  Timeline: %s\n', hosp.distanceKm, hosp.urgencyWindow);
+fprintf('      Helpline : %s\n', hosp.helpline);
+
+% 3. Multilingual Patient Eye Health Slips (English & Hindi)
+slipEn = fullfile(rootDir, 'Patient_Health_Slip_en.pdf');
+slipHi = fullfile(rootDir, 'Patient_Health_Slip_hi.pdf');
+generate_patient_slip(patientRecord, 'en', slipEn);
+generate_patient_slip(patientRecord, 'hi', slipHi);
+fprintf('  > Multilingual Patient Health Slips exported (English & Hindi).\n');
+
+% 4. Vision Loss Empathy Simulator Video & 5-Stage Montage Card
+empathyVid = fullfile(rootDir, 'dr_vision_loss_empathy.mp4');
+[~, empathyCard] = generate_empathy_video(empathyVid, struct('fps', 12, 'duration', 6));
+fprintf('  > Vision Loss Empathy Simulator Video exported: %s\n', empathyVid);
 
 % -------------------------------------------------------------------------
 % STEP 6: Module 5 - Simulink Telemedicine 100,000 Patient Simulation

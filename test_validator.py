@@ -101,12 +101,11 @@ def check_matlab_file(filepath):
                 before = code[:start_pos].rstrip()
                 after = code[end_pos:].lstrip()
                 
-                # If preceded by (, {, or comma, or followed by ), }, +, -, :
-                # it is array indexing, not a block terminator
                 is_index = False
-                if before and (before[-1] in "({,:"):
+                open_parens = before.count('(') - before.count(')') + before.count('{') - before.count('}')
+                if open_parens > 0:
                     is_index = True
-                if after and (after[0] in ")}+-:*^;/"):
+                elif after and (after[0] in "+-:*^/"):
                     is_index = True
                     
                 if not is_index:
@@ -126,7 +125,7 @@ def check_matlab_file(filepath):
         return False
 
 def main():
-    root = "g:/sih"
+    root = os.path.dirname(os.path.abspath(__file__))
     m_files = []
     for dirpath, _, filenames in os.walk(root):
         for f in filenames:

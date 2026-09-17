@@ -6,7 +6,17 @@
 *.7z
 archive/
 
-# MATLAB files
+# Large Model Checkpoints & Ablation Dumps (>100MB or intermediate dumps)
+data/ablation_study_results.mat
+src/module3_classification/trained_dr_resnet50_finetuned.mat
+src/module3_classification/ablation_exp*.mat
+*.bak
+scratch_stats.mat
+full_accuracy_analysis_results.mat
+sweet_spot_search_results.mat
+
+
+# MATLAB temporary files
 *.asv
 *.m~
 *.slxc
@@ -20,7 +30,12 @@ Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
 
+# Batch run logs & outputs
+Batch_Screening_Summary_*.csv
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
+
+
