@@ -9,7 +9,7 @@
 [![Referable DR Specificity](https://img.shields.io/badge/Specificity-91.80%25-brightgreen.svg)]()
 [![Binary Screening Accuracy](https://img.shields.io/badge/Screening%20Accuracy-93.00%25-brightgreen.svg)]()
 [![AUC-ROC](https://img.shields.io/badge/AUC--ROC-0.9829-brightgreen.svg)]()
-[![Grade 4 Zero Miss](https://img.shields.io/badge/Grade%204%20PDR-100%25%20Zero--Miss-success.svg)]()
+[![Grade 4 Recall](https://img.shields.io/badge/Grade%204%20Recall-100.0%25%20(Evaluated)-brightgreen.svg)]()
 [![WHO Standard](https://img.shields.io/badge/WHO%20Benchmark-Exceeded%20(+14.6%25)-success.svg)]()
 [![Ayushman Bharat](https://img.shields.io/badge/ABDM-ABHA%20QR%20Integrated-teal.svg)]()
 [![Zero Dependency](https://img.shields.io/badge/Deployment-Native%20Edge%20(No%20Install)-blue.svg)]()
@@ -40,8 +40,8 @@ India is the diabetes capital of the world, home to over **77 million diabetic i
 - Operates **100% offline at the edge** in under **1.8 seconds per patient** without cloud servers.
 - Protects patient safety via an automated **Clinical IQA Quality Gate** that suppresses grading on degraded scans.
 - Combines deep learning with clinical rules via the **80/20 Multimodal Fusion Rule** (80% ResNet-50 + 20% direct optical lesion evidence) to eliminate AI hallucination.
-- Bridges the patient compliance gap through an interactive **25-second Vision Loss Empathy Simulator**, skyrocketing hospital referral compliance from **32% to over 88%**.
-- Mathematically proven by a **100,000-patient MathWorks Simulink model** to collapse district specialist waiting lists from **6.8 months down to under 4.2 minutes**.
+- Bridges the patient counseling gap through an interactive **25-second Vision Loss Empathy Simulator**, designed to overcome asymptomatic patient denial and encourage hospital referral follow-through by visually rendering progressive sight deterioration.
+- Validated via a **100,000-patient MathWorks Simulink / SimEvents discrete-event model**, showing modelled district specialist waiting queues decrease from **6.8 months down to under 4.2 minutes** under edge-triage assumptions.
 - Slashes per-patient screening costs from **₹1,200 at private hospitals to less than ₹8 at rural sub-centres**.
 
 ---
@@ -77,12 +77,12 @@ All performance metrics exceed the official **SIH Problem Statement 26038** clin
 | **Area Under ROC (AUC)** | **0.9829** | $> 0.90$ | **EXCEEDED ✅** |
 | **Precision (Positive Predictive Value)** | **89.70%** | — | **CLINICAL GRADE ✅** |
 | **F1-Score** | **0.9210** | — | **CLINICAL GRADE ✅** |
-| **Grade 4 (Proliferative DR)** | **100.0% (Caught)** | Clinical Zero-Miss | **100% ZERO-MISS ✅** |
+| **Grade 4 (Proliferative DR)** | **100.0% Recall** | High-Sensitivity Triage | **100% (EVALUATED COHORT) ✅** |
 | **Grade 3 (Severe NPDR)** | **95.2% (Caught)** | — | **HIGH RISK INTERVENTION ✅** |
 | **Grade 2 (Moderate NPDR)** | **92.8% (Caught)** | — | **EARLY REFERRAL ✅** |
 | **Non-Referable Cleared (Grades 0 & 1)** | **91.80% (Cleared)** | $> 85.0\%$ | **PHC TRIAGE SAFE ✅** |
 
-> **Clinical Zero-Miss Guarantee**: 100.0% of emergency Grade 4 Proliferative DR cases were correctly caught and flagged for urgent vitreoretinal intervention, preventing irreversible blindness.
+> **High Sensitivity for Emergent Cases**: 100.0% of Grade 4 Proliferative DR cases in the evaluated test cohort were successfully identified and prioritized for urgent vitreoretinal surgical referral, demonstrating high sensitivity where missed detection carries the highest clinical risk.
 
 ### 🌐 Outperforming Global Healthcare Standards (WHO & UK NSC Benchmarks)
 
@@ -124,7 +124,7 @@ flowchart TD
     G --> H["Module 4: Explainable AI (Grad-CAM & Doctor Callouts ① ② ③)"]
     H --> I["Step 5: Clinical Decision Support & Empathy Counseling"]
     
-    I --> I1["25-Second HD Vision Loss Empathy Simulator (32% -> 88% Compliance)"]
+    I --> I1["25-Second HD Vision Loss Empathy Simulator (Patient Counseling Tool)"]
     I --> I2["Single-Click Export: Doctor PDF Report & Multilingual Patient Slips"]
     I --> J["Module 5: Simulink 100k Patient Telemedicine Network Model"]
 ```
@@ -162,7 +162,7 @@ Prevents misdiagnosis on degraded scans before grading begins:
 
 ### 4. The 25-Second Vision Loss Empathy Simulator
 Solves the psychological barrier of **asymptomatic patient denial**:
-- Early diabetic retinopathy is completely painless; historically, **over 68% of rural patients ignore doctor referral slips**.
+- Early diabetic retinopathy is completely painless; published public health literature indicates that **over 60% of rural patients fail to follow up on specialist referral slips** due to the absence of early symptoms.
 - RetinaCare AI incorporates a 25-second, 30fps broadcast-quality MP4 simulator (`dr_vision_loss_empathy.mp4`) with smooth cosine S-curve cross-dissolve transitions across 750 frames.
 - Shows the patient their familiar medicine bottle deteriorating across all 5 clinical stages:
   - *Stage 0 (Normal)*: Sharp 20/20 vision on medicine labels.
@@ -170,13 +170,13 @@ Solves the psychological barrier of **asymptomatic patient denial**:
   - *Stage 2 (Moderate NPDR / DME)*: Wavy foveal distortion (**metamorphopsia**), making dosages unreadable.
   - *Stage 3 (Severe NPDR)*: Dense black blind spots (**scotomas**) and drifting vitreous floaters.
   - *Stage 4 (Proliferative DR)*: Opaque descending **vitreous hemorrhage curtain** causing legal blindness (20/400).
-- **Clinical Impact**: Rural pilot testing demonstrated that seeing this 25-second video boosted specialist hospital attendance from **32% to over 88%**.
+- **Behavioral Health Purpose**: The simulator serves as an educational counseling tool for frontline health workers (ASHAs/ANMs) to visually explain disease progression to patients who feel entirely asymptomatic, directly targeting the psychological denial that causes low referral follow-through.
 
 ### 5. MathWorks Simulink 100k-Patient District Queueing Model (`telemed_screening.slx`)
-A discrete-event systems model in **Simulink and SimEvents** modeling a network of 50 Primary Health Centres serving **100,000 diabetic patients annually** over a throttled 512 kbps rural cellular network:
-- **Centralized Cloud Paradigm**: Uploading uncompressed 15MB images over weak links creates massive server backlogs, leading to specialist waiting times of **6.8 months** ($\rho = 1.67$).
-- **RetinaCare AI Edge Paradigm**: Screening locally in $<1.8\text{s}$, clearing 80% of healthy patients at the village clinic, and transmitting only 8KB encrypted metadata summaries.
-- **The Result**: Specialist consultation queues collapse from **6.8 months to under 4.2 minutes**, cutting rural cellular bandwidth consumption by **over 99.8%**.
+A discrete-event systems model built in **Simulink and SimEvents** simulating a network of 50 Primary Health Centres serving a modelled population of **100,000 diabetic patients annually** over throttled 512 kbps rural cellular uplinks:
+- **Modelled Centralized Cloud Scenario**: Queuing all uncompressed 15MB images to central servers over constrained uplinks produces severe bottlenecking ($\rho = 1.67$), resulting in a modelled district specialist waiting queue of **6.8 months** in the simulation.
+- **Modelled RetinaCare AI Edge Scenario**: Decentralizing screening to the edge ($<1.8\text{s}$ per scan) filters out non-referable cases locally and transmits lightweight 8KB encrypted metadata summaries for referable patients only.
+- **Simulation Findings**: Under these modelled operating parameters, the discrete-event queue drops from **6.8 months to under 4.2 minutes**, while reducing simulated cellular data transmission by **over 99.8%** across the 50-centre network.
 
 ### 6. Frontline Public Health & Field Deployment Suite
 - **Ayushman Bharat Digital Mission (ABDM) Integration**: Instant patient intake via USB QR scanning of national ABHA cards.
@@ -318,9 +318,9 @@ Navigate to the **Simulink Simulation** tab on the sidebar:
 | **Frontline Screening Cost** | ₹1,200 (Private Clinic) | **< ₹8 (Rural PHC)** | **99.3% Cost Reduction** |
 | **Late-Stage Surgical Cost** | ₹1,50,000 (Vitrectomy/Anti-VEGF) | **Prevented via Early Triage** | **Saves Crores in State Health Funds** |
 | **Specialist Review Time** | 5 – 7 minutes per scan | **< 30 seconds (XAI Callouts)** | **400% Specialist Efficiency** |
-| **District Patient Backlog** | 6.8 months (>40,000 patients) | **< 4.2 minutes** | **Backlog Virtually Eliminated** |
+| **District Patient Backlog** | 6.8 months (simulated cloud queue) | **< 4.2 minutes (modelled edge triage)** | **Modelled Bottleneck Relief** |
 | **Cellular Bandwidth Usage** | 15 MB raw image upload | **8 KB encrypted summary packet** | **99.8% Bandwidth Savings** |
-| **Patient Referral Follow-up** | 32% (Asymptomatic Denial) | **88% (Empathy Simulator)** | **+56% Follow-Through Rate** |
+| **Patient Referral Follow-up** | Low follow-through (asymptomatic denial) | **Interactive Empathy Simulator** | **Counseling visualizes risk to drive follow-through** |
 
 ---
 
