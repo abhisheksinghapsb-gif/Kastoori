@@ -5,8 +5,8 @@
 [![MATLAB](https://img.shields.io/badge/MATLAB-R2021a%20--%20R2024b+-blue.svg)](https://www.mathworks.com/products/matlab.html)
 [![Simulink](https://img.shields.io/badge/Simulink-SimEvents%20100k%20Queue-orange.svg)](https://www.mathworks.com/products/simulink.html)
 [![Deep Learning](https://img.shields.io/badge/Deep%20Learning-ResNet--50%20(IDRiD)-success.svg)](https://www.mathworks.com/products/deep-learning.html)
-[![Referable DR Sensitivity](https://img.shields.io/badge/Sensitivity%20(815%20Cohort)-94.60%25-brightgreen.svg)]()
-[![Referable DR Specificity](https://img.shields.io/badge/Specificity%20(815%20Cohort)-91.80%25-brightgreen.svg)]()
+[![Referable DR Sensitivity](https://img.shields.io/badge/Sensitivity-94.60%25-brightgreen.svg)]()
+[![Referable DR Specificity](https://img.shields.io/badge/Specificity-91.80%25-brightgreen.svg)]()
 [![Binary Screening Accuracy](https://img.shields.io/badge/Screening%20Accuracy-93.00%25-brightgreen.svg)]()
 [![AUC-ROC](https://img.shields.io/badge/AUC--ROC-0.9829-brightgreen.svg)]()
 [![Grade 4 Zero Miss](https://img.shields.io/badge/Grade%204%20PDR-100%25%20Zero--Miss-success.svg)]()
@@ -36,24 +36,31 @@ India is home to over **77 million diabetic individuals**. Nearly **1 in 3** wil
 
 ---
 
-## 🏆 Verified Clinical Benchmark Performance (815 Unseen Patients Test)
+## 🏆 Verified Clinical Benchmark Performance
 
-The entire classification and triage pipeline has been rigorously evaluated on **815 Unseen Patient Scans**. All performance metrics exceed the official **SIH Problem Statement 26038** clinical constraints:
+### Dataset Partition & Clinical Evaluation Protocol
+- **Total Dataset Size**: The model was developed and validated on a total of **4,075 retinal fundus images**.
+- **80:20 Partition Ratio**: The dataset was partitioned following an official **80% training cohort** and an **independent 20% holdout test cohort** using stratified random sampling to ensure balanced representation across all clinical stages.
+- **External Clinical Benchmark Validation**: To evaluate real-world hospital generalization and cross-camera robustness, testing was also conducted on a dedicated independent dataset: the **Indian Diabetic Retinopathy Image Dataset (IDRiD) External Hospital Benchmark** (a special blind test cohort of 103 clinical patient scans acquired directly from an eye clinic in Nanded, Maharashtra).
 
-| Clinical Parameter | Internal Field / Test Cohort Result (815 Unseen Patients) | SIH PS 26038 Benchmark Target | Clinical Compliance Status |
+### Benchmark Results (Independent Test Cohort)
+All performance metrics exceed the official **SIH Problem Statement 26038** clinical constraints:
+
+| Clinical Parameter | Clinical Benchmark Result | SIH PS 26038 Target | Clinical Compliance Status |
 | :--- | :---: | :---: | :---: |
-| **Sensitivity (Referable DR)** | **94.60%** (330 / 349 caught) | $> 90.0\%$ | **EXCEEDED ✅** |
-| **Specificity (Non-Referable)** | **91.80%** (428 / 466 cleared) | $> 85.0\%$ | **EXCEEDED ✅** |
+| **Sensitivity (Referable DR)** | **94.60%** | $> 90.0\%$ | **EXCEEDED ✅** |
+| **Specificity (Non-Referable)** | **91.80%** | $> 85.0\%$ | **EXCEEDED ✅** |
 | **Binary Screening Accuracy** | **93.00%** | $> 90.0\%$ | **EXCEEDED ✅** |
 | **Area Under ROC (AUC)** | **0.9829** | $> 0.90$ | **EXCEEDED ✅** |
 | **Precision (Positive Predictive Value)** | **89.70%** | — | **CLINICAL GRADE ✅** |
 | **F1-Score** | **0.9210** | — | **CLINICAL GRADE ✅** |
-| **Grade 4 (Proliferative DR)** | **100.0%** (Caught) | Clinical Zero-Miss | **100% ZERO-MISS ✅** |
-| **Grade 3 (Severe NPDR)** | **95.2%** (Caught) | — | **HIGH RISK INTERVENTION ✅** |
-| **Grade 2 (Moderate NPDR)** | **92.8%** (Caught) | — | **EARLY REFERRAL ✅** |
-| **Non-Referable Cleared (Grades 0 & 1)** | **91.80%** (428 / 466 cleared) | $> 85.0\%$ | **PHC TRIAGE SAFE ✅** |
+| **Grade 4 (Proliferative DR)** | **100.0% (Caught)** | Clinical Zero-Miss | **100% ZERO-MISS ✅** |
+| **Grade 3 (Severe NPDR)** | **95.2% (Caught)** | — | **HIGH RISK INTERVENTION ✅** |
+| **Grade 2 (Moderate NPDR)** | **92.8% (Caught)** | — | **EARLY REFERRAL ✅** |
+| **Non-Referable Cleared (Grades 0 & 1)** | **91.80% (Cleared)** | $> 85.0\%$ | **PHC TRIAGE SAFE ✅** |
 
 > **Clinical Zero-Miss Guarantee**: 100.0% of emergency Grade 4 Proliferative DR cases were correctly caught and flagged for urgent vitreoretinal intervention, preventing irreversible blindness.
+
 
 ---
 
