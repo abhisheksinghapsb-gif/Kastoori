@@ -19,7 +19,7 @@ tStart = tic;
 fprintf('\n');
 fprintf('===================================================================================\n');
 fprintf('  SIH PS 26038: EXPLAINABLE AI FOR DIABETIC RETINOPATHY SCREENING IN RURAL INDIA\n');
-fprintf('  MathWorks Sponsored Production Prototype | Master Pipeline Demonstration\n');
+fprintf('  MathWorks Sponsored Production Prototype | Developed by Team Kastoori\n');
 fprintf('===================================================================================\n\n');
 
 % Set up paths

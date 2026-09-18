@@ -1,7 +1,7 @@
 @echo off
 title RETINACARE AI - Launching Dashboard...
 echo =======================================================================
-echo   RETINACARE AI : RURAL TELE-OPHTHALMOLOGY SCREENING SUITE
+echo   RETINACARE AI : RURAL TELE-OPHTHALMOLOGY SCREENING SUITE (TEAM KASTOORI)
 echo   Starting MATLAB and launching interactive screening dashboard...
 echo =======================================================================
 

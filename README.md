@@ -1,5 +1,5 @@
 # RetinaCare AI — Rural Tele-Ophthalmology Screening Suite
-### Explainable AI & System-Level Telemedicine Simulation for Early Diabetic Retinopathy Detection
+### Developed by Team Kastoori | Explainable AI & System-Level Telemedicine Simulation
 **Smart India Hackathon (SIH) — Problem Statement 26038 | Sponsored by MathWorks**
 
 [![MATLAB](https://img.shields.io/badge/MATLAB-R2021a%20--%20R2024b+-blue.svg)](https://www.mathworks.com/products/matlab.html)
@@ -275,8 +275,8 @@ g:/sih_backup/
 
 ### Step 1: Clone Repository
 ```bash
-git clone https://github.com/abhisheksinghapsb-gif/Kasturi.git
-cd Kasturi
+git clone https://github.com/abhisheksinghapsb-gif/Kasturi.git Kastoori
+cd Kastoori
 ```
 
 ### Step 2: Launch Interactive GUI Dashboard
@@ -333,10 +333,12 @@ Navigate to the **Simulink Simulation** tab on the sidebar:
 ---
 
 ## 👥 Acknowledgements
+- **Team Kastoori**: Developed by Team Kastoori for Smart India Hackathon (SIH PS 26038).
 - **Smart India Hackathon (SIH)**: Problem Statement 26038.
 - **MathWorks India**: Technical sponsorship, toolboxes, and engineering guidance.
 - **Indian Diabetic Retinopathy Image Dataset (IDRiD)**: Clinical fundus training cohort from Nanded, Maharashtra.
 
 ---
 *Clearer Vision. Healthier Communities.*
+
 
