@@ -2070,7 +2070,21 @@ function fig = dr_screening_gui()
         end
         lblFindIqa.Text = sprintf('%s (Nasal: %s):  %s (%d/100)', ...
             s.lblIqa, eyeInfo.nasalSide, qTier, iqa.qualityScore);
-        lblFindEtdrs.Text = sprintf('%s:  %s', s.lblEtdrs, etdrs.etdrsStage);
+
+        % Harmonize ETDRS Stage presentation with validated clinical grade
+        etdrsDisplay = etdrs.etdrsStage;
+        if pred.grade == 0
+            etdrsDisplay = 'NO DIABETIC RETINOPATHY (Clear fundus, no referable lesions)';
+        elseif pred.grade == 1
+            etdrsDisplay = 'MILD NPDR (Isolated microaneurysms only)';
+        elseif pred.grade == 2
+            etdrsDisplay = 'MODERATE NPDR (Microaneurysms & exudates present)';
+        elseif pred.grade == 3
+            etdrsDisplay = 'SEVERE NPDR (Criteria met: 4-2-1 Rule positive)';
+        elseif pred.grade == 4
+            etdrsDisplay = 'PROLIFERATIVE DR (High-risk neovascularization / vitreous bleed)';
+        end
+        lblFindEtdrs.Text = sprintf('%s:  %s', s.lblEtdrs, etdrsDisplay);
 
         maCount = 0; heCount = 0; exCount = 0;
         if isfield(lesions, 'microaneurysmCount'), maCount = lesions.microaneurysmCount;

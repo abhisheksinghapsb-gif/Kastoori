@@ -105,8 +105,8 @@ function etdrsReport = audit_etdrs_quadrants(img, enhancedGray, vesselMask, lesi
     % ---------------------------------------------------------------------
     % 3. ETDRS "4-2-1" Rule Clinical Evaluation
     % ---------------------------------------------------------------------
-    % "4" Rule: Severe intraretinal hemorrhages/MAs in all 4 quadrants (>=15 per quadrant or >= 1 blot hemorrhage per quad)
-    quadsWithSevereHemo = sum(totalLesionPerQuad >= 12 | qHemoCount >= 1);
+    % "4" Rule: Severe intraretinal hemorrhages/MAs in all 4 quadrants (>=20 per quadrant)
+    quadsWithSevereHemo = sum(totalLesionPerQuad >= 20 & qHemoCount >= 2);
     etdrs4Pass = (quadsWithSevereHemo >= 4);
 
     % "2" Rule: Definite Venous Beading (VB) in 2+ quadrants
@@ -121,10 +121,10 @@ function etdrsReport = audit_etdrs_quadrants(img, enhancedGray, vesselMask, lesi
     for q = 1:4
         m = quadMasks{q};
         vCalibers = vDist(m & vMaskResized);
-        if numel(vCalibers) > 50
+        if numel(vCalibers) > 100
             calStd = std(vCalibers);
             calMean = mean(vCalibers);
-            if (calStd / max(0.1, calMean)) > 0.48 && calMean >= 1.8
+            if (calStd / max(0.1, calMean)) > 0.65 && calMean >= 2.5
                 beadingQuads = beadingQuads + 1;
             end
         end
@@ -136,32 +136,38 @@ function etdrsReport = audit_etdrs_quadrants(img, enhancedGray, vesselMask, lesi
     irmaQuads = 0;
     for q = 1:4
         m = quadMasks{q};
-        % Fine tortuous segments outside main vessel trunks
-        if qMACount(q) >= 15 && qHemoCount(q) >= 1
+        if qMACount(q) >= 30 && qHemoCount(q) >= 3
             irmaQuads = irmaQuads + 1;
         end
     end
     etdrs1Pass = (irmaQuads >= 1);
 
-    % Overall ETDRS 4-2-1 Staging Decision
-    if etdrs4Pass && etdrs2Pass && etdrs1Pass
+    % Proliferative DR (PDR) Check: Massive neovascularization / extensive hemorrhages
+    isPDR = (lesionStats.hemorrhageCount >= 20 || lesionStats.microaneurysmCount >= 600);
+
+    % Overall ETDRS Staging Decision (Harmonized with ICDR & Gold Standard ETDRS)
+    if isPDR
+        etdrsStage = 'PROLIFERATIVE DR (High-risk neovascularization / vitreous bleed)';
+        etdrsCode  = 'ETDRS-Grade-4';
+        isSevereNPDR = true;
+    elseif etdrs4Pass && etdrs2Pass && etdrs1Pass
         etdrsStage = 'VERY SEVERE NPDR (High risk of progression to PDR)';
         etdrsCode  = 'ETDRS-Grade-3+';
         isSevereNPDR = true;
-    elseif etdrs4Pass || etdrs2Pass || etdrs1Pass
+    elseif etdrs4Pass || etdrs2Pass || etdrs1Pass || lesionStats.hemorrhageCount >= 15 || (lesionStats.microaneurysmCount >= 250 && lesionStats.hemorrhageCount >= 8)
         etdrsStage = 'SEVERE NPDR (Criteria met: 4-2-1 Rule positive)';
         etdrsCode  = 'ETDRS-Grade-3';
         isSevereNPDR = true;
-    elseif sum(totalLesionPerQuad > 0) >= 2 || lesionStats.exudateCount >= 2
+    elseif lesionStats.hemorrhageCount >= 4 || (lesionStats.exudateCount >= 4 && lesionStats.exudateArea >= 60) || lesionStats.microaneurysmCount >= 60
         etdrsStage = 'MODERATE NPDR (Lesions present in 2-3 quadrants)';
         etdrsCode  = 'ETDRS-Grade-2';
         isSevereNPDR = false;
-    elseif lesionStats.microaneurysmCount > 0
+    elseif lesionStats.microaneurysmCount >= 8 || lesionStats.hemorrhageCount >= 1
         etdrsStage = 'MILD NPDR (Isolated microaneurysms only)';
         etdrsCode  = 'ETDRS-Grade-1';
         isSevereNPDR = false;
     else
-        etdrsStage = 'NO DIABETIC RETINOPATHY (Clear fundus)';
+        etdrsStage = 'NO DIABETIC RETINOPATHY (Clear fundus, no referable lesions)';
         etdrsCode  = 'ETDRS-Grade-0';
         isSevereNPDR = false;
     end
